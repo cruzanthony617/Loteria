@@ -1,75 +1,100 @@
 <!doctype html>
 <html lang="en">
 <head>
- <header class="header">
-      <h1>Lotería Automatica</h1>
-    </header>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lotería Automatica</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main class="app">
-<section class="speech">
-  <label class="speech-row">
-    <input type="checkbox" id="speechOn" checked />
-    Anunciar Las Cartas
-  </label>
 
-  <label class="speech-row">
-    Voz:
-    <select id="speechLang">
-      <option value="es-US"selected>Mujer</option>
-      <option value="es-MX">Hombre</option>
-      
-    </select>
-  </label>
-</section>
+<header class="header">
+  <h1>Lotería Automatica</h1>
+</header>
 
+<main class="app">
+  <section class="main-row">
 
-   
+    <!-- LEFT COLUMN: Speed + Speech (single box) -->
+    <aside class="panel left-box">
+      <div class="left-section">
+        <h3 class="panel-title">Controles</h3>
 
-   <section class="card-area">
-  <div class="deck">
-    <!-- stack -->
-    <div class="stack" id="stack"></div>
+        <div class="speed-block">
+          <label for="intervalRange">
+            Interval: <span id="intervalLabel">5.0</span>s
+          </label>
+          <input id="intervalRange" type="range" min="5.0" max="10" step="0.5" value="5.0" />
+        
+        </div>
 
-    <!-- active card -->
-    <div class="card-frame active">
-      <div class="placeholder" id="placeholder">
-        Presiona <b>Draw</b> Para Comenzar
+        <hr class="panel-divider" />
+
+        <div class="speech-block">
+          
+        <button id="speechToggle" class="speaker-btn" aria-label="Toggle speech" title="Toggle speech">
+          🔊
+        </button>
+    
+
+          <label class="speech-row">
+            Voz:
+            <select id="speechLang">
+              <option value="es-US" selected>Mujer</option>
+              <option value="es-MX">Hombre</option>
+            </select>
+          </label>
+        </div>
       </div>
-      <img id="cardImg" alt="Lotería card" />
-      <div id="countdownOverlay" class="countdown-overlay hidden">
-        <span id="countdownNumber">5</span>
-      </div>
-    </div>
-  </div>
+    </aside>
 
-  <div class="meta">
-    <div id="countText">0 / 54 drawn</div>
-    <div class="small" id="statusText">Paused</div>
-  </div>
-</section>
+    <!-- CENTER COLUMN: Game -->
+    <section class="center-column">
 
-    <section class="controls">
-      <button id="startPauseBtn" class="primary">Start</button>
-      <button id="drawBtn">Draw</button>
-      <button id="resetBtn" class="danger">Reset</button>
+      <section class="card-area">
+        <div class="deck">
+          <div class="card-frame active" id="cardFrame">
+            <button id="cardFullscreenBtn" class="card-fs-btn" aria-label="Fullscreen card" title="Fullscreen">
+              ⛶
+            </button>
+            <div class="placeholder" id="placeholder">
+           
+
+
+
+
+   Presiona <b>Draw</b> Para Comenzar
+            </div>
+            <img id="cardImg" alt="Lotería card" />
+            <div id="countdownOverlay" class="countdown-overlay hidden">
+              <span id="countdownNumber">5</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="meta">
+          <div id="countText">0 / 54 drawn</div>
+          <div class="small" id="statusText">Paused</div>
+        </div>
+      </section>
+
+      <section class="controls">
+        <button id="startPauseBtn" class="primary">Start</button>
+        <button id="drawBtn">Draw</button>
+        <button id="resetBtn" class="danger">Reset</button>
+      </section>
+
     </section>
 
-    <section class="interval">
-      <label for="intervalRange">
-        Interval: <span id="intervalLabel">5.0</span>s
-      </label>
-      <input id="intervalRange" type="range" min="5.0" max="10" step="0.5" value="5.0" />
-      <p class="hint">
-        By Anthony Cruz
-      </p>
-    </section>
-  </main>
+    <!-- RIGHT COLUMN: Dealt cards -->
+    <aside class="panel dealt" aria-label="Dealt cards">
+      <h3>Cartas Cantadas</h3>
+      <ul id="dealtList"></ul>
+    </aside>
 
-  <script src="app.js"></script>
+  </section>
+</main>
+
+<script src="app.js"></script>
 </body>
 </html>
