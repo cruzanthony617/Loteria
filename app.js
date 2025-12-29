@@ -22,15 +22,23 @@ function renderStack() {
   }
 }
 
-
 let used = new Set();
 let current = null;
 
 let timerId = null;
 let isRunning = false;
 
+// First-start countdown state
+let hasStartedOnce = false;
+let countdownTimer = null;
+let countdownActive = false;
+
 const cardImg = document.getElementById("cardImg");
 const placeholder = document.getElementById("placeholder");
+
+// Overlay elements (must exist in HTML)
+const countdownOverlay = document.getElementById("countdownOverlay");
+const countdownNumber = document.getElementById("countdownNumber");
 
 const countText = document.getElementById("countText");
 const statusText = document.getElementById("statusText");
@@ -46,7 +54,12 @@ function updateUI() {
   countText.textContent = `${used.size} / ${cards.length} drawn`;
   statusText.textContent = isRunning ? "Running" : "Paused";
 
-  if (current) {
+  // While the countdown is active (before the first card), hide the placeholder text.
+  if (countdownActive && !current) {
+    placeholder.style.display = "none";
+    cardImg.style.display = "none";
+    cardImg.removeAttribute("src");
+  } else if (current) {
     placeholder.style.display = "none";
     cardImg.style.display = "block";
     cardImg.src = current;
@@ -57,6 +70,7 @@ function updateUI() {
   }
 
   startPauseBtn.textContent = isRunning ? "Pause" : "Start";
+  renderStack();
 }
 
 function remainingCards() {
@@ -70,13 +84,44 @@ function drawNext() {
     alert("All cards have been drawn!");
     return;
   }
+
   const next = remaining[Math.floor(Math.random() * remaining.length)];
   used.add(next);
   current = next;
 
-speak(nameForCardPath(next));
-
+  speak(nameForCardPath(next));
   updateUI();
+}
+
+function startFirstCountdown(onDone) {
+  // If overlay is missing, just proceed immediately.
+  if (!countdownOverlay || !countdownNumber) {
+    countdownActive = false;
+    onDone();
+    return;
+  }
+
+  // Hide "Presiona Draw Para Comenzar" immediately
+  countdownActive = true;
+  updateUI();
+
+  let count = 5;
+  countdownNumber.textContent = count;
+  countdownOverlay.classList.remove("hidden");
+
+  countdownTimer = setInterval(() => {
+    count--;
+    countdownNumber.textContent = count;
+
+    if (count === 0) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+      countdownOverlay.classList.add("hidden");
+
+      countdownActive = false;
+      onDone();
+    }
+  }, 1000);
 }
 
 function startTimer() {
@@ -84,14 +129,33 @@ function startTimer() {
   isRunning = true;
 
   const seconds = parseFloat(intervalRange.value);
-  timerId = setInterval(drawNext, seconds * 1000);
 
-  updateUI();
+  // First Start only → show 5-second overlay countdown, then draw first card.
+  if (!hasStartedOnce && used.size === 0) {
+    hasStartedOnce = true;
+
+    startFirstCountdown(() => {
+      drawNext();
+      timerId = setInterval(drawNext, seconds * 1000);
+      updateUI();
+    });
+  } else {
+    timerId = setInterval(drawNext, seconds * 1000);
+    updateUI();
+  }
 }
 
 function stopTimer() {
   if (timerId) clearInterval(timerId);
   timerId = null;
+
+  // Stop countdown if it’s running
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = null;
+
+  countdownActive = false;
+  if (countdownOverlay) countdownOverlay.classList.add("hidden");
+
   isRunning = false;
   updateUI();
 }
@@ -100,6 +164,7 @@ function resetGame() {
   stopTimer();
   used = new Set();
   current = null;
+  hasStartedOnce = false; // allow countdown again after reset
   updateUI();
 }
 
@@ -154,11 +219,9 @@ function warmUpSpeech() {
 
 document.addEventListener("click", warmUpSpeech, { once: true });
 
-startPauseBtn.addEventListener("click",  () => {
+startPauseBtn.addEventListener("click", () => {
   if (isRunning) stopTimer();
   else startTimer();
-
-
 });
 
 drawBtn.addEventListener("click", drawNext);
