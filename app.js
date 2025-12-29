@@ -36,6 +36,8 @@ let countdownActive = false;
 const cardImg = document.getElementById("cardImg");
 const placeholder = document.getElementById("placeholder");
 
+
+const dealtListEl = document.getElementById("dealtList");
 // Overlay elements (must exist in HTML)
 const countdownOverlay = document.getElementById("countdownOverlay");
 const countdownNumber = document.getElementById("countdownNumber");
@@ -88,6 +90,13 @@ function drawNext() {
   const next = remaining[Math.floor(Math.random() * remaining.length)];
   used.add(next);
   current = next;
+
+  // Add to dealt list (newest on top)
+  if (dealtListEl) {
+    const li = document.createElement("li");
+    li.textContent = nameForCardPath(next);
+    dealtListEl.prepend(li);
+  }
 
   speak(nameForCardPath(next));
   updateUI();
@@ -165,10 +174,20 @@ function resetGame() {
   used = new Set();
   current = null;
   hasStartedOnce = false; // allow countdown again after reset
+
+  // Clear dealt history
+  if (dealtListEl) dealtListEl.innerHTML = "";
+
   updateUI();
 }
 
-const speechOnEl = document.getElementById("speechOn");
+const speechToggleBtn = document.getElementById("speechToggle");
+let speechEnabled = true;
+function setSpeaking(on) {
+  if (!speechToggleBtn) return;
+  speechToggleBtn.classList.toggle("is-speaking", !!on);
+}
+
 const speechLangEl = document.getElementById("speechLang");
 
 // Map each image to a spoken name.
@@ -194,13 +213,17 @@ function nameForCardPath(path) {
 }
 
 function speak(text) {
-  if (!speechOnEl?.checked) return;
+  if (!speechEnabled) { setSpeaking(false); return; }
   if (!("speechSynthesis" in window)) return;
 
   // Stop any current speech so rapid draws don't overlap
   window.speechSynthesis.cancel();
+  setSpeaking(false);
 
   const utter = new SpeechSynthesisUtterance(text);
+  utter.onstart = () => setSpeaking(true);
+  utter.onend = () => setSpeaking(false);
+  utter.onerror = () => setSpeaking(false);
   utter.lang = speechLangEl?.value || "es-MX";
   utter.rate = 0.95; // slightly slower / clearer
   utter.pitch = 1.0;
@@ -238,3 +261,47 @@ intervalRange.addEventListener("change", () => {
 
 intervalLabel.textContent = parseFloat(intervalRange.value).toFixed(1);
 updateUI();
+
+
+/* Speaker toggle */
+if (speechToggleBtn) {
+  speechToggleBtn.addEventListener("click", () => {
+    speechEnabled = !speechEnabled;
+    speechToggleBtn.textContent = speechEnabled ? "🔊" : "🔇";
+    if (!speechEnabled && ("speechSynthesis" in window)) window.speechSynthesis.cancel();
+    if (!speechEnabled) setSpeaking(false);
+  });
+}
+
+
+/* ===== Fullscreen toggle for main card only ===== */
+const cardFrameEl = document.getElementById("cardFrame");
+const cardFullscreenBtn = document.getElementById("cardFullscreenBtn");
+
+async function toggleCardFullscreen() {
+  if (!cardFrameEl) return;
+
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      // Request fullscreen on the card frame only
+      await cardFrameEl.requestFullscreen();
+    }
+  } catch (err) {
+    console.error("Fullscreen failed:", err);
+  }
+}
+
+function syncCardFullscreenUI() {
+  const isFs = document.fullscreenElement === cardFrameEl;
+  if (cardFullscreenBtn) cardFullscreenBtn.textContent = isFs ? "✕" : "⛶";
+  if (cardFrameEl) cardFrameEl.classList.toggle("is-fullscreen", isFs);
+}
+
+if (cardFullscreenBtn) {
+  cardFullscreenBtn.addEventListener("click", toggleCardFullscreen);
+}
+
+document.addEventListener("fullscreenchange", syncCardFullscreenUI);
+syncCardFullscreenUI();
