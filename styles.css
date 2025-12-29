@@ -192,3 +192,24 @@ button:active { transform: translateY(1px); }
   color: #b8b8c2;
 }
 
+
+/* First-start countdown overlay */
+.countdown-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 5;
+}
+
+.countdown-overlay span {
+  font-size: 6rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.hidden {
+  display: none;
+}
