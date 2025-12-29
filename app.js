@@ -9,12 +9,8 @@ const stackEl = document.getElementById("stack");
 
 function renderStack() {
   stackEl.innerHTML = "";
-
   const remaining = cards.length - used.size;
-
-  // show up to 5 layers for performance/clarity
   const layers = Math.min(remaining, 5);
-
   for (let i = layers; i > 0; i--) {
     const div = document.createElement("div");
     div.className = "stack-card";
@@ -36,7 +32,6 @@ let countdownActive = false;
 const cardImg = document.getElementById("cardImg");
 const placeholder = document.getElementById("placeholder");
 
-// Overlay elements (must exist in HTML)
 const countdownOverlay = document.getElementById("countdownOverlay");
 const countdownNumber = document.getElementById("countdownNumber");
 
@@ -54,7 +49,6 @@ function updateUI() {
   countText.textContent = `${used.size} / ${cards.length} drawn`;
   statusText.textContent = isRunning ? "Running" : "Paused";
 
-  // While the countdown is active (before the first card), hide the placeholder text.
   if (countdownActive && !current) {
     placeholder.style.display = "none";
     cardImg.style.display = "none";
@@ -94,14 +88,12 @@ function drawNext() {
 }
 
 function startFirstCountdown(onDone) {
-  // If overlay is missing, just proceed immediately.
   if (!countdownOverlay || !countdownNumber) {
     countdownActive = false;
     onDone();
     return;
   }
 
-  // Hide "Presiona Draw Para Comenzar" immediately
   countdownActive = true;
   updateUI();
 
@@ -117,7 +109,6 @@ function startFirstCountdown(onDone) {
       clearInterval(countdownTimer);
       countdownTimer = null;
       countdownOverlay.classList.add("hidden");
-
       countdownActive = false;
       onDone();
     }
@@ -130,10 +121,8 @@ function startTimer() {
 
   const seconds = parseFloat(intervalRange.value);
 
-  // First Start only → show 5-second overlay countdown, then draw first card.
   if (!hasStartedOnce && used.size === 0) {
     hasStartedOnce = true;
-
     startFirstCountdown(() => {
       drawNext();
       timerId = setInterval(drawNext, seconds * 1000);
@@ -149,10 +138,8 @@ function stopTimer() {
   if (timerId) clearInterval(timerId);
   timerId = null;
 
-  // Stop countdown if it’s running
   if (countdownTimer) clearInterval(countdownTimer);
   countdownTimer = null;
-
   countdownActive = false;
   if (countdownOverlay) countdownOverlay.classList.add("hidden");
 
@@ -164,15 +151,13 @@ function resetGame() {
   stopTimer();
   used = new Set();
   current = null;
-  hasStartedOnce = false; // allow countdown again after reset
+  hasStartedOnce = false;
   updateUI();
 }
 
 const speechOnEl = document.getElementById("speechOn");
 const speechLangEl = document.getElementById("speechLang");
 
-// Map each image to a spoken name.
-// This assumes your filenames are cards/01.jpg ... cards/54.jpg
 const cardNames = [
   "El Gallo", "El Diablo", "La Dama", "El Catrín", "El Paraguas", "La Sirena",
   "La Escalera", "La Botella", "El Barril", "El Árbol", "El Melón", "El Valiente",
@@ -186,33 +171,45 @@ const cardNames = [
 ];
 
 function nameForCardPath(path) {
-  // Extract 01..54 from cards/XX.jpg
   const m = path.match(/\/(\d{2})\./);
   if (!m) return "Carta";
   const idx = parseInt(m[1], 10) - 1;
   return cardNames[idx] || `Carta ${idx + 1}`;
 }
 
+// iPhone-safe Spanish speech synthesis
 function speak(text) {
   if (!speechOnEl?.checked) return;
   if (!("speechSynthesis" in window)) return;
 
-  // Stop any current speech so rapid draws don't overlap
   window.speechSynthesis.cancel();
 
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = speechLangEl?.value || "es-MX";
-  utter.rate = 0.95; // slightly slower / clearer
+  const voices = window.speechSynthesis.getVoices();
+
+  let voice =
+    voices.find(v => v.lang === "es-MX") ||
+    voices.find(v => v.lang.startsWith("es")) ||
+    voices.find(v => v.lang === "en-US");
+
+  if (voice) {
+    utter.voice = voice;
+    utter.lang = voice.lang;
+  }
+
+  utter.rate = 0.95;
   utter.pitch = 1.0;
 
   window.speechSynthesis.speak(utter);
 }
 
-// iPhone Safari sometimes needs a "warm-up" after a user gesture
+// Required for iOS
+window.speechSynthesis.onvoiceschanged = () => {};
+
 function warmUpSpeech() {
   if (!("speechSynthesis" in window)) return;
   const u = new SpeechSynthesisUtterance(" ");
-  u.volume = 0; // silent
+  u.volume = 0;
   window.speechSynthesis.speak(u);
   window.speechSynthesis.cancel();
 }
@@ -232,7 +229,6 @@ intervalRange.addEventListener("input", () => {
 });
 
 intervalRange.addEventListener("change", () => {
-  // If running, restart with new interval
   if (isRunning) startTimer();
 });
 
