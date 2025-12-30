@@ -194,9 +194,12 @@ const btnCloseSettingsTop = document.getElementById("btnCloseSettingsTop");
 const settingsContent = document.querySelector("#settingsModal .modal-content");
 
 // Uses images named cards/01.jpg ... cards/54.jpg
+const isMobile = Math.min(window.innerWidth, window.innerHeight) <= 520;
+const cardsFolder = isMobile ? "cards_m" : "cards";
+
 const cardImages = Array.from({ length: TOTAL }, (_, i) => {
   const num = String(i + 1).padStart(2, "0");
-  return `cards/${num}.jpg`;
+  return `${cardsFolder}/${num}.jpg`;
 });
 
 let revealed = new Set();
