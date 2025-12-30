@@ -1,1 +1,0 @@
-Loteria Automatica
