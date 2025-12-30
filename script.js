@@ -400,11 +400,17 @@ function getIntervalMs(){
 }
 
 function stopAuto(){
+  autoRunning = false;
   if(autoTimer){
-    clearInterval(autoTimer);
+    clearTimeout(autoTimer);
     autoTimer = null;
   }
-  autoRunning = false;
+  try{
+    if(pendingSpeechTimer){
+      clearTimeout(pendingSpeechTimer);
+      pendingSpeechTimer = null;
+    }
+  }catch(e){}
   if(btnStart) btnStart.textContent = "Comenzar";
 }
 
@@ -413,16 +419,30 @@ function startAuto(){
   autoRunning = true;
   if(btnStart) btnStart.textContent = "Detener";
   intervalMs = getIntervalMs();
-  // reveal one immediately, then every interval
-  revealOneRandom();
-  autoTimer = setInterval(() => {
+
+  const loop = () => {
+    if(!autoRunning) return;
     if(revealed.size >= TOTAL){
       stopAuto();
       return;
     }
-    // don't queue if an animation is mid-flight
-    if(!busy) revealOneRandom();
-  }, intervalMs);
+
+    Promise.resolve()
+      .then(() => {
+        if(!autoRunning) return;
+        if(!busy) return revealOneRandom();
+      })
+      .catch(() => {
+        // swallow errors to avoid Safari killing the page on unhandled rejections
+      })
+      .finally(() => {
+        if(!autoRunning) return;
+        autoTimer = setTimeout(loop, intervalMs);
+      });
+  };
+
+  // reveal one immediately
+  loop();
 }
 
 function updateStatus(){
@@ -772,3 +792,9 @@ if(btnTestVoice){
 if(speechDelay){
   speechDelay.addEventListener("input", updateSpeechDelay);
 }
+
+
+// iOS/Safari safety: stop autoplay when page is backgrounded
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden) stopAuto();
+});
