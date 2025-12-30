@@ -409,7 +409,7 @@ function createCards(){
     const front = document.createElement("div");
     front.className = "face front";
     // background image for this card
-    front.style.backgroundImage = `url(${cardImages[i]})`;
+    front.dataset.src = cardImages[i]; // lazy-load on reveal
 
     inner.appendChild(back);
     inner.appendChild(front);
@@ -426,12 +426,37 @@ function pickRandomUnrevealed(){
     if(!revealed.has(i)) remaining.push(i);
   }
   if(remaining.length === 0) return null;
-  return remaining[randInt(remaining.length)];
+  const i = remaining[randInt(remaining.length)];
+  preloadImage(cardImages[i]);
+  return i;
 }
 
 function getCard(i){
   return stackEl.querySelector(`.card[data-index="${i}"]`);
 }
+
+
+function ensureCardImageLoaded(cardEl){
+  try{
+    const front = cardEl ? cardEl.querySelector(".face.front") : null;
+    if(!front) return;
+    if(front.style.backgroundImage && front.style.backgroundImage !== "none") return;
+    const src = front.dataset && front.dataset.src ? front.dataset.src : null;
+    if(src) front.style.backgroundImage = `url(${src})`;
+  }catch(e){}
+}
+
+
+function preloadImage(src){
+  try{
+    if(!src) return;
+    const img = new Image();
+    img.decoding = "async";
+    img.loading = "eager";
+    img.src = src;
+  }catch(e){}
+}
+
 
 async function revealCard(i){
   if(busy) return;
@@ -446,6 +471,7 @@ async function revealCard(i){
   }
 
   revealed.add(i);
+  ensureCardImageLoaded(card);
   playDrawSound();
   speakCard(LOTERIA_NAMES[i] || `Carta ${i + 1}`);
   card.style.zIndex = "9999";
