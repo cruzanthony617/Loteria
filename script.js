@@ -1,6 +1,13 @@
 const TOTAL = 54;
 
 
+
+
+let speechPrimed = false;
+
+// Prevent crash if referenced elsewhere
+function flushPendingSpeak(){ /* no-op */ }
+
 const LOTERIA_NAMES = ['El Gallo', 'El Diablo', 'La Dama', 'El Catrín', 'El Paraguas', 'La Sirena', 'La Escalera', 'La Botella', 'El Barril', 'El Árbol', 'El Melón', 'El Valiente', 'El Gorrito', 'La Muerte', 'La Pera', 'La Bandera', 'El Bandolón', 'El Violoncello', 'La Garza', 'El Pájaro', 'La Mano', 'La Bota', 'La Luna', 'El Cotorro', 'El Borracho', 'El Negrito', 'El Corazón', 'La Sandía', 'El Tambor', 'El Camarón', 'Las Jaras', 'El Músico', 'La Araña', 'El Soldado', 'La Estrella', 'El Cazo', 'El Mundo', 'El Apache', 'El Nopal', 'El Alacrán', 'La Rosa', 'La Calavera', 'La Campana', 'El Cantarito', 'El Venado', 'El Sol', 'La Corona', 'La Chalupa', 'El Pino', 'El Pescado', 'La Palma', 'La Maceta', 'El Arpa', 'La Rana'];
 
 const LOTERIA_DICHOS = {
@@ -719,8 +726,8 @@ if(btnMute){
 // Init voice list (some browsers load voices async)
 if(window.speechSynthesis){
   populateVoiceSelect();
-  flushPendingSpeak();
-  window.speechSynthesis.addEventListener("voiceschanged", populateVoiceSelect);
+  if (typeof flushPendingSpeak === 'function') flushPendingSpeak();
+window.speechSynthesis.addEventListener("voiceschanged", populateVoiceSelect);
 }
 
 if(speechToggle){
