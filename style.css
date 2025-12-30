@@ -708,7 +708,7 @@ body{
     touch-action: manipulation;
   }
 }
-/* ================================================= */
+/* ================================================ */
 
 
 /* iOS background attachment fix */
@@ -716,4 +716,25 @@ body{
   body{
     background-attachment: scroll !important;
   }
+}
+
+
+/* ===== Creator credit ===== */
+.credit{
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: rgba(255,255,255,0.75);
+  z-index: 60000;
+  pointer-events: none; /* never blocks buttons */
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+
+/* Push UI slightly down so it doesn’t overlap the credit */
+.ui{
+  top: calc(env(safe-area-inset-top, 0px) + 26px) !important;
 }
