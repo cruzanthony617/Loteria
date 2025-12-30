@@ -20,7 +20,7 @@ body{
   align-items:center;
   justify-content:center;
   gap:18px;
-  background: url('Capture.PNG') center/cover no-repeat fixed;
+  background: url('Capture.PNG') center/cover no-repeat;
   color:#e9eef7;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   overflow:hidden;
@@ -609,3 +609,111 @@ label.setting.slider-setting:has(#speechDelay) {
   padding-top: 10px;
 }
 /* ========================================= */
+
+
+
+/* ===== Mobile fixes ===== */
+body{
+  min-height: 100svh; /* better than 100vh on mobile browsers */
+}
+
+/* Controls bar: make it fit on small screens */
+@media (max-width: 520px){
+  .ui{
+    top: 6px;
+    width: calc(100vw - 16px);
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .ui button{
+    padding: 9px 10px;
+    border-radius: 12px;
+    font-size: 14px;
+  }
+  .status{ font-size: 12px; }
+
+  /* Give room for fixed controls */
+  .stage{
+    margin-top: 92px;
+    height: min(72svh, 520px);
+    padding-top: 8px; /* stack higher but not clipped */
+  }
+
+  /* Scale cards down so they fit */
+  :root{
+    --card-w: 240px;
+    --card-h: 320px;
+
+    /* tighter reveal motion on mobile */
+    --lift: 45px;
+    --fan-x: 18px;
+  }
+
+  /* Reduce 3D tilt a bit for narrow screens */
+  .stack{
+    transform: rotateX(12deg) rotateY(-16deg);
+  }
+}
+
+/* Short screens (landscape phones) */
+@media (max-height: 520px){
+  .stage{
+    height: min(78svh, 520px);
+    margin-top: 80px;
+  }
+  :root{
+    --card-w: 220px;
+    --card-h: 300px;
+    --lift: 40px;
+    --fan-x: 16px;
+  }
+}
+/* ======================= */
+
+
+
+/* ===== iPhone/iOS Safari fixes (incl. iPhone 15) ===== */
+@supports (-webkit-touch-callout: none){
+
+  /* Use dynamic viewport units on iOS to avoid clipping */
+  body{
+    min-height: 100dvh;
+  }
+
+  /* Respect safe area (notch) for fixed top controls */
+  .ui{
+    top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
+  }
+
+  /* Push the stage down accordingly */
+  .stage{
+    margin-top: calc(env(safe-area-inset-top, 0px) + 98px) !important;
+  }
+
+  /* Make the settings panel scroll smoothly */
+  #settingsModal .modal-content{
+    max-height: calc(100dvh - 90px) !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: calc(env(safe-area-inset-top, 0px) + 14px) !important;
+  }
+
+  /* Prevent rubber-band scroll from fighting with swipes/taps */
+  body{
+    overscroll-behavior: none;
+  }
+
+  /* Improve tap reliability on the stack */
+  .stack{
+    touch-action: manipulation;
+  }
+}
+/* ================================================ */
+
+
+/* iOS background attachment fix */
+@supports (-webkit-touch-callout: none){
+  body{
+    background-attachment: scroll !important;
+  }
+}
