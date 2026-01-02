@@ -1,0 +1,746 @@
+:root{
+  /* Bigger cards */
+  --card-w: 220px;
+  --card-h: 320px;
+
+  --stack-gap: 1.6px;    /* depth spacing between cards */
+  --tilt-x: 14deg;
+  --tilt-y: -20deg;
+  --lift: 60px;         /* how high the revealed card pops */
+  --fan-x: 50px;        /* how far revealed card moves sideways */
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  background: url('Capture.PNG') center/cover no-repeat;
+  color:#e9eef7;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  overflow:hidden;
+}
+
+.ui{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  padding:10px 14px;
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:14px;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(8px);
+}
+
+button{
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.08);
+  color:#e9eef7;
+  padding:10px 12px;
+  border-radius:12px;
+  font-weight:600;
+  letter-spacing:.2px;
+  transition: transform .1s ease, background .2s ease, border-color .2s ease;
+  user-select:none;
+}
+button:hover{ background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.28); }
+button:active{ transform: translateY(1px) scale(0.99); }
+button:disabled{ opacity:.5; cursor:not-allowed; }
+
+.status{ font-size:14px; opacity:.9; padding:0 6px; }
+
+.stage{
+  width: min(85vw, 900px);
+  height: min(70vh, 520px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  perspective: 1100px;
+  position:relative;
+}
+
+.stack{
+  cursor: pointer;
+  position:relative;
+  width: var(--card-w);
+  height: var(--card-h);
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  filter: drop-shadow(0 22px 28px rgba(0,0,0,0.5));
+}
+
+.card{
+  position:absolute;
+  inset:0;
+  transform-style: preserve-3d;
+  transition:
+    transform 900ms cubic-bezier(.2,.9,.2,1),
+    filter 400ms ease;
+}
+
+
+/* ===== iOS Safari / GPU stability: flatten inactive cards ===== */
+.card{
+  transform-style: flat; /* keep most cards out of 3D to reduce GPU load */
+}
+.card.is-active,
+.card.revealed{
+  transform-style: preserve-3d;
+}
+/* ============================================================ */
+.card.is-active{
+  filter: drop-shadow(0 18px 18px rgba(0,0,0,0.45));
+}
+
+.card .inner{
+  position:absolute;
+  inset:0;
+  transform-style: preserve-3d;
+  transition: transform 900ms cubic-bezier(.2,.9,.2,1);
+}
+
+.card.face-down .inner{ transform: rotateY(0deg); }
+.card.revealed .inner{ transform: rotateY(180deg); }
+
+.face{
+  position:absolute;
+  inset:0;
+  border-radius:16px;
+  backface-visibility:hidden;
+  border: 1px solid rgba(255,255,255,0.14);
+  overflow:hidden;
+}
+
+
+.back::before{
+  content:"";
+  position:absolute;
+  inset:12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.15);
+}
+
+.back::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,0.08), transparent 40%),
+    radial-gradient(circle at 70% 70%, rgba(255,255,255,0.05), transparent 45%);
+  pointer-events:none;
+}
+
+/* FRONT (image) */
+.front{
+  transform: rotateY(180deg);
+  background-color:#111;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.front::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0.30),
+    rgba(255,255,255,0.05) 40%,
+    rgba(255,255,255,0.02)
+  );
+  pointer-events:none;
+}
+
+/* Ground */
+.ground{
+  position:absolute;
+  width: 520px;
+  height: 520px;
+  border-radius:50%;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.09), transparent 60%);
+  transform: translateY(140px) rotateX(75deg);
+  filter: blur(0.2px);
+  pointer-events:none;
+  opacity:.65;
+}
+
+
+/* Background overlay for contrast */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background: radial-gradient(1200px 600px at 50% 35%, rgba(42,47,58,0.78) 0%, rgba(15,17,22,0.88) 60%, rgba(11,12,16,0.94) 100%);
+  pointer-events:none;
+  z-index:-1;
+}
+
+
+/* Settings */
+.setting{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:12px;
+  background: rgba(0,0,0,0.10);
+}
+.setting span{
+  font-size:13px;
+  opacity:.9;
+  white-space:nowrap;
+}
+.setting input{
+  width:78px;
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  color:#e9eef7;
+  outline:none;
+}
+.setting input:focus{
+  border-color: rgba(255,255,255,0.30);
+}
+
+
+/* Slider interval control */
+.slider-setting{
+  gap:10px;
+}
+
+.slider-setting input[type="range"]{
+  -webkit-appearance:none;
+  appearance:none;
+  width:140px;
+  height:6px;
+  border-radius:999px;
+  background: linear-gradient(90deg, #6aa6ff, #8b5cf6);
+  outline:none;
+}
+
+.slider-setting input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  appearance:none;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#fff;
+  border:2px solid #8b5cf6;
+  cursor:pointer;
+}
+
+.slider-setting input[type="range"]::-moz-range-thumb{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#fff;
+  border:2px solid #8b5cf6;
+  cursor:pointer;
+}
+
+.slider-setting output{
+  font-size:13px;
+  min-width:28px;
+  text-align:right;
+}
+
+
+/* Collapsible Settings menu */
+.settings-menu{
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:14px;
+  background: rgba(255,255,255,0.06);
+  padding:6px 10px;
+}
+
+.settings-menu > summary{
+  list-style:none;
+  cursor:pointer;
+  user-select:none;
+  font-weight:700;
+  letter-spacing:.2px;
+  padding:6px 6px;
+  border-radius:10px;
+  outline:none;
+}
+
+.settings-menu > summary::-webkit-details-marker{
+  display:none;
+}
+
+.settings-menu > summary::after{
+  content:"▾";
+  display:inline-block;
+  margin-left:8px;
+  opacity:.9;
+  transform: translateY(-1px);
+  transition: transform 200ms ease;
+}
+
+.settings-menu[open] > summary::after{
+  transform: rotate(-180deg) translateY(1px);
+}
+
+.settings-panel{
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid rgba(255,255,255,0.12);
+  display:flex;
+  justify-content:center;
+}
+
+
+/* Settings Modal */
+.modal{
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,0.65);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.modal-content{
+  position: relative;
+  background: linear-gradient(135deg, #111827, #020617);
+  border-radius:18px;
+  padding:22px 24px;
+  min-width:280px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+}
+
+.modal-content h3{
+  margin:0 0 14px 0;
+  text-align:center;
+}
+
+.modal-actions{
+  display:flex;
+  justify-content:center;
+  margin-top:18px;
+}
+
+
+/* Icon button (Settings) */
+.icon-btn{
+  width:42px;
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  padding:0;
+  border-radius:50%;
+}
+
+.icon-btn:hover{
+  transform: rotate(15deg) scale(1.05);
+}
+
+.icon-btn:active{
+  transform: rotate(0deg) scale(0.95);
+}
+
+
+/* Modal button polish */
+.modal-actions button{
+  min-width: 110px;
+}
+.modal-actions button:hover{
+  background: rgba(255,255,255,0.14);
+}
+
+
+/* Prevent underlying elements from intercepting clicks when modal is open */
+body.modal-open .ui,
+body.modal-open .stage{
+  pointer-events: none;
+}
+
+/* Keep modal interactive */
+body.modal-open .modal,
+body.modal-open .modal *{
+  pointer-events: auto;
+}
+
+
+
+/* BACK (seamless tiled pattern) */
+
+
+/* BACK (Lotería collage – seamless tile) */
+
+
+/* BACK (Lotería collage – fit entire image) */
+.back{
+  background-image: url('assets/card-back-loteria-full.jpg');
+  background-repeat: no-repeat;
+  background-size: contain;     /* fit whole image */
+  background-position: center;
+  background-color: #ffffff;    /* bars (if any) look clean */
+  border: 1px solid rgba(0,0,0,0.35);
+}
+
+
+/* Mute button */
+.mute-btn{
+  width:100%;
+  margin-top:10px;
+  padding:10px;
+  border-radius:12px;
+  font-size:14px;
+}
+
+
+/* Settings sections */
+.section-title{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,0.14);
+  font-weight:800;
+  letter-spacing:.2px;
+  font-size:14px;
+  opacity:.95;
+}
+
+.toggle-setting{
+  justify-content: space-between;
+}
+
+.select-setting{
+  gap:10px;
+}
+.select-setting select{
+  width: 170px;
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  color:#e9eef7;
+  outline:none;
+}
+.select-setting select:focus{
+  border-color: rgba(255,255,255,0.30);
+}
+
+.voice-actions{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+.voice-actions button{
+  flex:1;
+  padding:10px 10px;
+  border-radius:12px;
+  font-size:14px;
+}
+
+
+/* Hide voice speed & delay controls (keep functionality) */
+#speechRate, #speechDelay { display:none !important; }
+#speechRateValue, #speechDelayValue { display:none !important; }
+
+
+/* Hide language / voice select dropdown */
+#voiceSelect { display: none !important; }
+#voiceSelect + * { display: none !important; }
+
+
+/* Hide voice speed and delay controls (UI only) */
+label.setting.slider-setting input#speechRate,
+label.setting.slider-setting input#speechDelay {
+  display: none !important;
+}
+label.setting.slider-setting:has(#speechRate),
+label.setting.slider-setting:has(#speechDelay) {
+  display: none !important;
+}
+
+
+/* ===== Settings modal visibility fix ===== */
+.modal{
+  align-items: flex-start; /* prevent top cutoff on small screens */
+}
+
+.modal-content{
+  margin-top: 40px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+/* ======================================= */
+
+
+/* Ensure modal is always above 3D scene */
+.modal{
+  position: fixed;
+  z-index: 2147483647 !important;
+}
+.modal-content{
+  position: relative;
+  z-index: 2147483647 !important;
+}
+
+
+/* ===== Tighten settings spacing ===== */
+#settingsModal .modal-content{
+  padding: 18px 18px;
+  max-width: 92vw;
+}
+
+#settingsModal .setting{
+  padding: 6px 8px;
+  gap: 8px;
+}
+
+#settingsModal .slider-setting input[type="range"]{
+  width: 130px;
+}
+
+#settingsModal .section-title{
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+#settingsModal .voice-actions{
+  margin-top: 8px;
+  gap: 8px;
+}
+
+#settingsModal .modal-actions{
+  margin-top: 12px;
+}
+
+/* Close (X) button */
+#settingsModal .close-x{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+}
+/* ================================ */
+
+
+/* Bottom close button as X */
+#btnCloseSettings{
+  font-size: 18px;
+  font-weight: 800;
+}
+
+
+/* Icon-only close button (✕) */
+#btnCloseSettings{
+  background: transparent !important;
+  border: none !important;
+  padding: 6px !important;
+  min-width: auto !important;
+  font-size: 22px;
+  line-height: 1;
+}
+#btnCloseSettings:hover{
+  background: rgba(255,255,255,0.15) !important;
+}
+
+
+/* Red hover for icon-only close button */
+#btnCloseSettings{
+  color: #ffffff;
+  transition: color 150ms ease, background 150ms ease;
+}
+#btnCloseSettings:hover{
+  color: #ff3b3b !important;
+  background: rgba(255, 59, 59, 0.18) !important;
+}
+
+
+/* ===== Move settings menu to top ===== */
+.modal{
+  align-items: flex-start !important;
+}
+
+#settingsModal .modal-content{
+  margin-top: 20px !important;
+}
+/* =================================== */
+
+
+/* ===== Move main controls to very top ===== */
+.ui{
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50000;
+}
+/* Add spacing so stage doesn't hide under controls */
+.stage{
+  margin-top: 80px;
+}
+/* ======================================== */
+
+
+/* ===== Larger cards ===== */
+:root{
+  --card-w: 300px;
+  --card-h: 400px;
+}
+
+/* Ensure back cover image fits cleanly */
+.back{
+  background-size: cover !important;
+  background-position: center !important;
+}
+/* ======================== */
+
+
+/* ===== Move card stack slightly higher ===== */
+.stage{
+  align-items: flex-start;
+  padding-top: 10px;
+}
+/* ========================================= */
+
+
+
+/* ===== Mobile fixes ===== */
+body{
+  min-height: 100svh; /* better than 100vh on mobile browsers */
+}
+
+/* Controls bar: make it fit on small screens */
+@media (max-width: 520px){
+  .ui{
+    top: 6px;
+    width: calc(100vw - 16px);
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .ui button{
+    padding: 9px 10px;
+    border-radius: 12px;
+    font-size: 14px;
+  }
+  .status{ font-size: 12px; }
+
+  /* Give room for fixed controls */
+  .stage{
+    margin-top: 92px;
+    height: min(72svh, 520px);
+    padding-top: 8px; /* stack higher but not clipped */
+  }
+
+  /* Scale cards down so they fit */
+  :root{
+    --card-w: 240px;
+    --card-h: 320px;
+
+    /* tighter reveal motion on mobile */
+    --lift: 45px;
+    --fan-x: 18px;
+  }
+
+  /* Reduce 3D tilt a bit for narrow screens */
+  .stack{
+    transform: rotateX(12deg) rotateY(-16deg);
+  }
+}
+
+/* Short screens (landscape phones) */
+@media (max-height: 520px){
+  .stage{
+    height: min(78svh, 520px);
+    margin-top: 80px;
+  }
+  :root{
+    --card-w: 220px;
+    --card-h: 300px;
+    --lift: 40px;
+    --fan-x: 16px;
+  }
+}
+/* ======================= */
+
+
+
+/* ===== iPhone/iOS Safari fixes (incl. iPhone 15) ===== */
+@supports (-webkit-touch-callout: none){
+
+  /* Use dynamic viewport units on iOS to avoid clipping */
+  body{
+    min-height: 100dvh;
+  }
+
+  /* Respect safe area (notch) for fixed top controls */
+  .ui{
+    top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
+  }
+
+  /* Push the stage down accordingly */
+  .stage{
+    margin-top: calc(env(safe-area-inset-top, 0px) + 98px) !important;
+  }
+
+  /* Make the settings panel scroll smoothly */
+  #settingsModal .modal-content{
+    max-height: calc(100dvh - 90px) !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: calc(env(safe-area-inset-top, 0px) + 14px) !important;
+  }
+
+  /* Prevent rubber-band scroll from fighting with swipes/taps */
+  body{
+    overscroll-behavior: none;
+  }
+
+  /* Improve tap reliability on the stack */
+  .stack{
+    touch-action: manipulation;
+  }
+}
+/* ================================================ */
+
+
+/* iOS background attachment fix */
+@supports (-webkit-touch-callout: none){
+  body{
+    background-attachment: scroll !important;
+  }
+}
+
+/* ===== iOS Safari GPU crash prevention: disable filter+3D combo ===== */
+@supports (-webkit-touch-callout: none){
+  .stack,
+  .card,
+  .card.is-active{
+    filter: none !important;
+  }
+}
+/* ================================================================ */
+
+/* Slightly reduce perspective on small screens for stability */
+@media (max-width: 520px){
+  .stage{
+    perspective: 800px;
+  }
+}
+
